@@ -9,7 +9,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@CrossOrigin(origins = "http://127.0.0.1:5173/")
+@CrossOrigin(origins = {"http://127.0.0.1:5173","http://localhost:5173"})
 @RequestMapping("/api/test-ride")
 public class TestRideController {
 
@@ -40,8 +40,8 @@ public class TestRideController {
     @PostMapping("/staff/update-status")
     public TestRide updateTestRideStatus(
             @RequestParam Long testRideId,
-            @RequestParam TestRideStatus status,
-            @RequestParam(required = false) String staffRemarks) {
-        return testRideService.updateStatus(testRideId, status, staffRemarks);
+            @RequestParam TestRideStatus status
+    ) {
+        return testRideService.updateStatus(testRideId, status);
     }
 }

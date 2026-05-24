@@ -1,16 +1,23 @@
 package com.riderrr.app.Controller;
 
+import com.riderrr.app.DTO.VehicleDTO;
+import com.riderrr.app.DTO.VehicleFilterDTO;
 import com.riderrr.app.DTO.VehicleResponse;
+import com.riderrr.app.Entity.Vehicle;
 import com.riderrr.app.Enum.Status;
 import com.riderrr.app.Service.Staff.InspectVehicle;
 import com.riderrr.app.Service.VehicleService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @CrossOrigin(origins = {"http://127.0.0.1:5173","http://localhost:5173"})
@@ -22,6 +29,9 @@ public class VehicleController {
 
     @Autowired
     InspectVehicle inspectVehicleService;
+
+    @Autowired
+    VehicleDTO vehicleDTO;
 
     @GetMapping("/")
     public String bike() {
@@ -44,12 +54,13 @@ public class VehicleController {
             @RequestParam String inspectionBranch,
             @RequestParam String customerName,
             @RequestParam String customerPhone,
-            @RequestParam String customerEmail
+            @RequestParam String customerEmail,
+            @RequestParam String branchId
     )
             throws IOException
     {
         return vehicleService.add(
-                brand, type, model, modelYear, color, purchaseDate, PurchasedAmount, ownerType, registrationNumber, images, inspectionDate, inspectionBranch, customerName, customerPhone, customerEmail
+                brand, type, model, modelYear, color, purchaseDate, PurchasedAmount, ownerType, registrationNumber, images, inspectionDate, inspectionBranch, customerName, customerPhone, customerEmail,branchId
         );
     }
 
@@ -57,6 +68,43 @@ public class VehicleController {
     public List<VehicleResponse> all()
     {
         return vehicleService.all();
+    }
+
+    @GetMapping("findById")
+    public VehicleResponse findById(
+            @RequestParam Long id
+    ){
+        return vehicleService.findById(id);
+    }
+
+    @GetMapping("/pendingAll")
+    public List<VehicleResponse> findPendingStatus(){
+        return vehicleService.findStatus(Status.PENDING);
+    }
+
+    @GetMapping("/draftAll")
+    public List<VehicleResponse> findDraftStatus(){
+        return vehicleService.findStatus(Status.DRAFT);
+    }
+
+    @GetMapping("/approvedAll")
+    public List<VehicleResponse> findApprovedStatus(){
+        return vehicleService.findStatus(Status.APPROVED);
+    }
+
+    @GetMapping("/acceptedAll")
+    public List<VehicleResponse> findAcceptedStatus(){
+        return vehicleService.findStatus(Status.ACCEPTED);
+    }
+
+    @GetMapping("/findAtBuy")
+    public List<VehicleResponse> findAtBuy(){
+        return vehicleService.findAcceptedVisibleAvailableVehicles();
+    }
+
+    @GetMapping("/findRecent")
+    public List<VehicleResponse> findRecent(){
+        return vehicleService.findRecent();
     }
 
     @PutMapping("/status")
@@ -101,13 +149,14 @@ public class VehicleController {
             @RequestParam Long id,
             @RequestParam double outLetPrice,
             @RequestParam Boolean isVisible,
+            @RequestParam double Rating,
             @RequestParam int Mileage,
             @RequestParam MultipartFile[] images
     )
             throws IOException
     {
         return vehicleService.updateVehicleByManager(
-                id, outLetPrice, isVisible, Mileage, images
+                id, outLetPrice, isVisible, Mileage, images, Rating
         );
     }
 
@@ -121,11 +170,11 @@ public class VehicleController {
             @RequestParam String customerPhone,
             @RequestParam boolean documentsGiven
     )
-        throws IOException
+            throws IOException
     {
-            return vehicleService.soldDetailsUpdate(
-                    id, Availability, SoldDate, sellingPrice, customerName, customerPhone, documentsGiven
-            );
+        return vehicleService.soldDetailsUpdate(
+                id, Availability, SoldDate, sellingPrice, customerName, customerPhone, documentsGiven
+        );
     }
 
     @PutMapping("/manager/edit")
@@ -147,11 +196,51 @@ public class VehicleController {
             @RequestParam double outLetPrice
 
     )
-        throws IOException
+            throws IOException
     {
         return vehicleService.editVehicleDetails(
                 id, brand, type, model, modelYear, color, purchaseDate, PurchasedAmount, ownerType, registrationNumber, inspectionDate, inspectionBranch, isVisible, Mileage, outLetPrice
         );
+    }
+
+
+
+    @GetMapping("/findAtBuyPage")
+    public ResponseEntity<Map<String, Object>> findAtBuyPage(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) List<String> brand,
+            @RequestParam(required = false) List<String> color,
+            @RequestParam(required = false) List<String> price,
+            @RequestParam(required = false) List<String> year,
+            @RequestParam(required = false, defaultValue = "") String sortBy,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "9") int size
+    ) {
+        VehicleFilterDTO req = new VehicleFilterDTO();
+        req.setSearch(search);
+        req.setBrand(brand);
+        req.setColor(color);
+        req.setPrice(price);
+        req.setYear(year);
+        req.setSortBy(sortBy);
+        req.setPage(page);
+        req.setSize(size);
+
+        Page<Vehicle> result = vehicleService.findAtBuyPage(req);
+
+        List<VehicleResponse> content = result.getContent()
+                .stream()
+                .map(vehicleDTO::readDTO)
+                .toList();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("content", content);
+        response.put("totalElements", result.getTotalElements());
+        response.put("totalPages", result.getTotalPages());
+        response.put("currentPage", result.getNumber());
+        response.put("isLast", result.isLast());
+
+        return ResponseEntity.ok(response);
     }
 
 }

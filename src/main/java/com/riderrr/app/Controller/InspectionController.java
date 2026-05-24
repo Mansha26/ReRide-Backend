@@ -50,4 +50,5 @@ public class InspectionController {
     public Inspection getInspectionReport(@PathVariable Long vehicleId) {
         return inspectionService.getInspectionByVehicleId(vehicleId);
     }
+
 }
