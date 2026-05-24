@@ -1,13 +1,20 @@
 package com.riderrr.app.Service;
 
 import com.riderrr.app.DTO.VehicleDTO;
+import com.riderrr.app.DTO.VehicleFilterDTO;
 import com.riderrr.app.DTO.VehicleResponse;
 import com.riderrr.app.Entity.Vehicle;
 import com.riderrr.app.Entity.VehicleImage;
 import com.riderrr.app.Enum.Status;
 import com.riderrr.app.Repository.VehicleRepository;
+import com.riderrr.app.Specification.VehicleSpecification;
 import com.riderrr.app.Util.FileUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -29,9 +36,8 @@ public class VehicleService {
     @Autowired
     VehicleDTO vehicleDTO;
 
-    public VehicleResponse add(String brand, String type, String model, String modelYear, String color, LocalDate purchaseDate, Double PurchasedAmount, String ownerType, String registrationNumber, MultipartFile[] images, LocalDate inspectionDate, String inspectionBranch, String customerName, String customerPhone, String customerEmail)
-            throws IOException
-    {
+    public VehicleResponse add(String brand, String type, String model, String modelYear, String color, LocalDate purchaseDate, Double PurchasedAmount, String ownerType, String registrationNumber, MultipartFile[] images, LocalDate inspectionDate, String inspectionBranch, String customerName, String customerPhone, String customerEmail, String branchId)
+            throws IOException {
 
         List<String> filePaths = fileUtil.saveFile(images);
         List<VehicleImage> imageList = new ArrayList<>();
@@ -47,9 +53,11 @@ public class VehicleService {
         v.setOwnerType(ownerType);
         v.setRegisterNumber(registrationNumber);
         v.setInspectionDate(inspectionDate);
+        v.setInspectionBranch(inspectionBranch);
         v.setCustomerName(customerName);
         v.setCustomerPhNo(customerPhone);
         v.setCustomerEmail(customerEmail);
+        v.setBranchId(branchId);
 
         for (String path : filePaths) {
             VehicleImage img = new VehicleImage();
@@ -77,9 +85,8 @@ public class VehicleService {
     }
 
     public VehicleResponse updateVehicleStatus(Long id, Status status)
-            throws IOException
-    {
-        Vehicle v =  vehicleRepository.findById(id).orElseThrow(() -> new RuntimeException("not found"));
+            throws IOException {
+        Vehicle v = vehicleRepository.findById(id).orElseThrow(() -> new RuntimeException("not found"));
         v.setStatus(status);
 
         Vehicle savedVehicle = vehicleRepository.save(v);
@@ -87,9 +94,8 @@ public class VehicleService {
     }
 
     public VehicleResponse updateVehicleVisibility(Long id, Boolean isVisible)
-            throws IOException
-    {
-        Vehicle v =  vehicleRepository.findById(id).orElseThrow(() -> new RuntimeException("not found"));
+            throws IOException {
+        Vehicle v = vehicleRepository.findById(id).orElseThrow(() -> new RuntimeException("not found"));
         v.setVisible(isVisible);
 
         Vehicle savedVehicle = vehicleRepository.save(v);
@@ -97,9 +103,8 @@ public class VehicleService {
     }
 
     public VehicleResponse updateVehicleAvailability(Long id, String Availability)
-            throws IOException
-    {
-        Vehicle v =  vehicleRepository.findById(id).orElseThrow(() -> new RuntimeException("not found"));
+            throws IOException {
+        Vehicle v = vehicleRepository.findById(id).orElseThrow(() -> new RuntimeException("not found"));
         v.setAvailability(Availability);
 
         Vehicle savedVehicle = vehicleRepository.save(v);
@@ -108,11 +113,10 @@ public class VehicleService {
 
 
     public VehicleResponse updateVehicleByManager(
-            Long id, double outLetPrice, Boolean isVisible, int Mileage, MultipartFile[] images
+            Long id, double outLetPrice, Boolean isVisible, int Mileage, MultipartFile[] images, double Rating
     )
-            throws IOException
-    {
-        Vehicle v =  vehicleRepository.findById(id).orElseThrow(() -> new RuntimeException("not found"));
+            throws IOException {
+        Vehicle v = vehicleRepository.findById(id).orElseThrow(() -> new RuntimeException("not found"));
 
         List<String> filePaths = fileUtil.saveFile(images);
 //        List<VehicleImage> imageList = new ArrayList<>();
@@ -120,6 +124,7 @@ public class VehicleService {
         v.setVisible(isVisible);
         v.setMileage(Mileage);
         v.setOutLetPrice(outLetPrice);
+        v.setRating(Rating);
 
         for (VehicleImage img : v.getImagePath()) {
             fileUtil.deleteFile(img.getFilePath());
@@ -139,9 +144,8 @@ public class VehicleService {
     }
 
     public VehicleResponse soldDetailsUpdate(Long id, String availability, LocalDate soldDate, double sellingPrice, String customerName, String customerPhone, boolean documentsGiven)
-            throws IOException
-    {
-        Vehicle v =  vehicleRepository.findById(id).orElseThrow(() -> new RuntimeException("not found"));
+            throws IOException {
+        Vehicle v = vehicleRepository.findById(id).orElseThrow(() -> new RuntimeException("not found"));
 
         v.setAvailability(availability);
         v.setSoldDate(soldDate);
@@ -157,9 +161,8 @@ public class VehicleService {
     public VehicleResponse editVehicleDetails(
             Long id, String brand, String type, String model, String modelYear, String color, LocalDate purchaseDate, Double PurchasedAmount, String ownerType, String registrationNumber, LocalDate inspectionDate, String inspectionBranch, Boolean isVisible, int mileage, double outLetPrice
     )
-            throws IOException
-    {
-        Vehicle v =  vehicleRepository.findById(id).orElseThrow(() -> new RuntimeException("not found"));
+            throws IOException {
+        Vehicle v = vehicleRepository.findById(id).orElseThrow(() -> new RuntimeException("not found"));
 
         v.setBrand(brand);
         v.setType(type);
@@ -171,6 +174,7 @@ public class VehicleService {
         v.setOwnerType(ownerType);
         v.setRegisterNumber(registrationNumber);
         v.setInspectionDate(inspectionDate);
+        v.setInspectionBranch(inspectionBranch);
         v.setVisible(isVisible);
         v.setMileage(mileage);
         v.setOutLetPrice(outLetPrice);
@@ -179,4 +183,98 @@ public class VehicleService {
         Vehicle savedVehicle = vehicleRepository.save(v);
         return vehicleDTO.convertToDTO(savedVehicle);
     }
+
+    public VehicleResponse findById(Long id) {
+        Vehicle v = vehicleRepository.findById(id).orElseThrow(() -> new RuntimeException("Vehicle Not Found"));
+        return vehicleDTO.convertToDTO((v));
+    }
+
+
+    public List<VehicleResponse> findStatus(Status status) {
+        List<Vehicle> vehicles = vehicleRepository.findVehiclesByStatus(status);
+
+        List<VehicleResponse> fetchStatusAll = new ArrayList<>();
+
+        for (Vehicle v : vehicles) {
+            fetchStatusAll.add(vehicleDTO.readDTO(v)); // single mapping
+        }
+
+        return fetchStatusAll;
+    }
+
+    public List<VehicleResponse> findAcceptedVisibleAvailableVehicles() {
+        List<Vehicle> vehicles = vehicleRepository.findAcceptedVisibleAvailableVehicles();
+
+        List<VehicleResponse> fetchAtBuy = new ArrayList<>();
+
+        for (Vehicle v : vehicles) {
+            fetchAtBuy.add(vehicleDTO.readDTO(v)); // single mapping
+        }
+
+        return fetchAtBuy;
+    }
+
+    public List<VehicleResponse> findRecent(){
+        Pageable pageable = PageRequest.of(
+                0, 8, Sort.by("id").descending()
+        );
+
+        List<Vehicle> vehicles = vehicleRepository.findRecent(pageable);
+        List<VehicleResponse> fetchRecent = new ArrayList<>();
+        for (Vehicle v : vehicles) {
+            fetchRecent.add(vehicleDTO.readDTO(v)); // single mapping
+        }
+
+        return fetchRecent;
+    }
+
+
+    public Page<Vehicle> findAtBuyPage(VehicleFilterDTO req) {
+
+        List<long[]> priceRanges = parseRangesLong(req.getPrice());
+        List<int[]> yearRanges = parseRangesInt(req.getYear());
+
+        Sort sort = buildSort(req.getSortBy());
+
+        Pageable pageable = PageRequest.of(req.getPage(), req.getSize(), sort);
+
+        Specification<Vehicle> spec = VehicleSpecification.build(
+                req.getSearch(),
+                req.getBrand(),
+                req.getColor(),
+                priceRanges,
+                yearRanges
+        );
+
+        return vehicleRepository.findAll(spec, pageable);
+    }
+
+
+    private List<long[]> parseRangesLong(List<String> ranges) {
+        if (ranges == null || ranges.isEmpty()) return null;
+        return ranges.stream().map(r -> {
+            String[] parts = r.split("-");
+            return new long[]{ Long.parseLong(parts[0]), Long.parseLong(parts[1]) };
+        }).toList();
+    }
+
+    private List<int[]> parseRangesInt(List<String> ranges) {
+        if (ranges == null || ranges.isEmpty()) return null;
+        return ranges.stream().map(r -> {
+            String[] parts = r.split("-");
+            return new int[]{ Integer.parseInt(parts[0]), Integer.parseInt(parts[1]) };
+        }).toList();
+    }
+
+    private Sort buildSort(String sortOption) {
+        return switch (sortOption == null ? "" : sortOption) {
+            case "vehicle_selling_price_lth" -> Sort.by(Sort.Direction.ASC,  "outLetPrice");
+            case "vehicle_selling_price_htl" -> Sort.by(Sort.Direction.DESC, "outLetPrice");
+            case "vehicle_model_year_lth"    -> Sort.by(Sort.Direction.ASC,  "modelYear");
+            case "vehicle_model_year_htl"    -> Sort.by(Sort.Direction.DESC, "modelYear");
+            case "rating_htl"                -> Sort.by(Sort.Direction.DESC, "rating");
+            default                          -> Sort.unsorted();
+        };
+    }
+
 }
