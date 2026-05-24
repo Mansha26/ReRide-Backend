@@ -30,7 +30,7 @@ public class VehicleDTO {
         }
         dto.setImages(imagePaths);
         dto.setInspectionDate(v.getInspectionDate());
-        dto.setInspectionBranch(v.getBranchId());
+        dto.setInspectionBranch(v.getInspectionBranch());
         dto.setCustomerName(v.getCustomerName());
         dto.setCustomerPhone(v.getCustomerPhNo());
         dto.setCustomerEmail(v.getCustomerEmail());
@@ -40,6 +40,9 @@ public class VehicleDTO {
         dto.setSellingPrice(v.getSellingPrice());
         dto.setAvailability(v.getAvailability());
         dto.setDocumentsGiven(v.isDocumentsGiven());
+        dto.setRating(v.getRating());
+        dto.setOutLetPrice(v.getOutLetPrice());
+        dto.setMileage(v.getMileage());
 
         return dto;
     }
@@ -64,7 +67,7 @@ public class VehicleDTO {
         }
         dto.setImages(imagePaths);
         dto.setInspectionDate(v.getInspectionDate());
-        dto.setInspectionBranch(v.getBranchId());
+        dto.setInspectionBranch(v.getInspectionBranch());
         dto.setCustomerName(v.getCustomerName());
         dto.setCustomerPhone(v.getCustomerPhNo());
         dto.setCustomerEmail(v.getCustomerEmail());
@@ -74,6 +77,9 @@ public class VehicleDTO {
         dto.setSellingPrice(v.getSellingPrice());
         dto.setAvailability(v.getAvailability());
         dto.setDocumentsGiven(v.isDocumentsGiven());
+        dto.setRating(v.getRating());
+        dto.setOutLetPrice(v.getOutLetPrice());
+        dto.setMileage(v.getMileage());
 
         return dto;
     }
