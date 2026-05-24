@@ -55,7 +55,5 @@ import java.time.LocalDate;
         public TestRideStatus getStatus() { return status; }
         public void setStatus(TestRideStatus status) { this.status = status; }
 
-        public String getStaffRemarks() { return staffRemarks; }
-        public void setStaffRemarks(String staffRemarks) { this.staffRemarks = staffRemarks; }
     }
 

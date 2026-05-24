@@ -25,7 +25,7 @@ public class VehicleImage {
     public void setVehicleImageId(Long id) {
         this.id = id;
     }
-@JsonIgnore
+    @JsonIgnore
     public Vehicle getVehicle() {
         return vehicleId;
     }
